@@ -70,7 +70,7 @@ h1 { font-size: 2rem; letter-spacing: -.02em; margin: 0; line-height: 1.1; }
 .bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .3s ease; }
 
 form.add {
-  display: grid; grid-template-columns: minmax(0,1fr) auto auto auto; gap: 8px; margin-bottom: 18px;
+  display: grid; grid-template-columns: minmax(0,1fr) auto auto; gap: 8px; margin-bottom: 18px;
 }
 form.add input, form.add select {
   background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
@@ -110,6 +110,7 @@ h2.late { color: var(--late); }
 .when { text-align: right; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; padding-right: 4px; }
 .when b { display: block; color: var(--ink); font-size: .95rem; }
 .task.late .when b, .task.late .when { color: var(--late); }
+.emptygrp { color: var(--muted); font-size: .9rem; padding: 12px 14px; margin-bottom: 8px; border: 1px dashed var(--line); border-radius: 12px; }
 .empty { color: var(--muted); padding: 24px 0; text-align: center; }
 
 details.donebox { margin-top: 26px; }
@@ -142,6 +143,7 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
 @media (max-width: 560px) {
   h1 { font-size: 1.6rem; }
   form.add { grid-template-columns: 1fr 1fr; }
+  form.add select#addGrp { grid-column: 1 / -1; }
   form.add input[type=text] { grid-column: 1 / -1; }
   form.add button { grid-column: 1 / -1; }
   .task { grid-template-columns: auto minmax(0,1fr); }
@@ -173,6 +175,7 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
     <input type="text" id="addTitle" placeholder="Nový úkol…" aria-label="Název nového úkolu" required>
     <select id="addCat" aria-label="Kategorie"></select>
     <input type="date" id="addDue" aria-label="Termín">
+    <select id="addGrp" aria-label="Sekce (jen úkoly bez termínu)" title="Sekce pro úkol bez termínu"></select>
     <button type="submit">Přidat</button>
   </form>
 
@@ -196,6 +199,7 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
       <label>Kategorie <select id="eCat"></select></label>
       <label>Termín <input type="date" id="eDue"></label>
     </div>
+    <label>Sekce (u úkolů bez termínu) <select id="eGrp"></select></label>
     <label>Podrobnosti <textarea id="eInfo" rows="2"></textarea></label>
     <label>Poznámka (zvýrazněná) <input type="text" id="eNote"></label>
     <div class="actions">
@@ -222,6 +226,20 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
     olymp: { name: "Olympiáda",  color: "var(--c-olymp)" },
     jine:  { name: "Jiné",       color: "var(--c-jine)" }
   };
+
+  // Sekce pro úkoly bez termínu (pořadí = pořadí na stránce).
+  var GROUPS = [
+    { id: "fo-skola",  name: "Fyzikální olympiáda škola" },
+    { id: "ao",        name: "Astronomická olympiáda" },
+    { id: "fo-okres",  name: "Fyzikální olympiáda okres" },
+    { id: "fyziklani", name: "Fyziklání a ŠVP" }
+  ];
+  function inferGroup(t) {
+    var n = (t.title || "").toLowerCase();
+    if (n.indexOf("astronomick") === 0) return "ao";
+    if (n.indexOf("fyzikální olympiáda") === 0) return n.indexOf("okres") >= 0 ? "fo-okres" : "fo-skola";
+    return "";
+  }
 
   // Úkoly převedené z artefaktu „Testy a dopisování – příprava a opravy“
   // (příprava = předchozí pracovní den před psaním, oprava = týden po psaní).
@@ -274,18 +292,21 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
     tasks.forEach(function (t) { have[t.id] = true; });
     plan.forEach(function (p) {
       if (!p || !p.id || have[p.id] || skip.indexOf(p.id) >= 0) return;
-      tasks.push({ id: p.id, title: p.title || "", cat: p.cat || "jine", due: p.due || "", done: false, info: p.info || "", note: p.note || "" });
+      tasks.push({ id: p.id, title: p.title || "", cat: p.cat || "jine", due: p.due || "", done: false, info: p.info || "", note: p.note || "", grp: p.grp || "" });
       added = true;
     });
     if (added) save();
   }
 
+  // Starší uložené úkoly nemají skupinu – doplníme ji podle názvu.
+  function migrate(t) { if (t && !("grp" in t)) t.grp = t.due ? "" : inferGroup(t); return t; }
+
   function load() {
     try {
       var raw = localStorage.getItem(KEY);
-      if (raw) { var p = JSON.parse(raw); if (Array.isArray(p)) return p; }
+      if (raw) { var p = JSON.parse(raw); if (Array.isArray(p)) return p.map(migrate); }
     } catch (e) {}
-    return seed();
+    return seed().map(migrate);
   }
   function save() { try { localStorage.setItem(KEY, JSON.stringify(tasks)); } catch (e) {} }
 
@@ -351,7 +372,8 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
     });
     var done = vis.filter(function (t) { return t.done; });
 
-    var groups = {}, html = "";
+    var groups = {}, html = "", undated = open.filter(function (t) { return !t.due; });
+    open = open.filter(function (t) { return t.due; });
     open.forEach(function (t) {
       var b = bucket(t);
       (groups[b.k] = groups[b.k] || { label: b.label, items: [] }).items.push(t);
@@ -361,7 +383,15 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
       html += '<h2' + (k === "0" || k === "1" ? ' class="late"' : '') + '>' + g.label + ' <span class="n">' + g.items.length + '</span></h2>';
       g.items.forEach(function (t) { html += row(t); });
     });
-    if (!open.length) html += '<div class="empty">Žádné otevřené úkoly. 🎉</div>';
+    // Úkoly bez termínu po skupinách; prázdné skupiny se ukazují, jen když není zapnutý filtr kategorie.
+    GROUPS.concat([{ id: "", name: "Ostatní bez termínu" }]).forEach(function (g) {
+      var items = undated.filter(function (t) { return (t.grp || "") === g.id; });
+      if (!items.length && (g.id === "" || filter !== "vse")) return;
+      html += '<h2>' + g.name + ' <span class="n">' + items.length + '</span></h2>';
+      if (!items.length) html += '<div class="emptygrp">Zatím nic.</div>';
+      items.forEach(function (t) { html += row(t); });
+    });
+    if (!open.length && !undated.length) html += '<div class="empty">Žádné otevřené úkoly. 🎉</div>';
     if (done.length) {
       done.sort(function (a, b) { return a.due < b.due ? 1 : -1; });
       html += '<details class="donebox"' + (window.__doneOpen ? " open" : "") + '><summary>Hotové (' + done.length + ')</summary>' + done.map(row).join("") + '</details>';
@@ -388,6 +418,9 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
   var catOpts = Object.keys(CATS).map(function (k) { return '<option value="' + k + '">' + CATS[k].name + '</option>'; }).join("");
   document.getElementById("addCat").innerHTML = catOpts;
   document.getElementById("eCat").innerHTML = catOpts;
+  var grpOpts = '<option value="">Ostatní bez termínu</option>' + GROUPS.map(function (g) { return '<option value="' + g.id + '">' + g.name + '</option>'; }).join("");
+  document.getElementById("addGrp").innerHTML = '<option value="">Sekce: ostatní bez termínu</option>' + GROUPS.map(function (g) { return '<option value="' + g.id + '">Sekce: ' + g.name + '</option>'; }).join("");
+  document.getElementById("eGrp").innerHTML = grpOpts;
 
   document.getElementById("addForm").addEventListener("submit", function (e) {
     e.preventDefault();
@@ -396,7 +429,7 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
     tasks.push({
       id: "u" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
       title: title, cat: document.getElementById("addCat").value,
-      due: document.getElementById("addDue").value, done: false, info: "", note: ""
+      due: document.getElementById("addDue").value, done: false, info: "", note: "", grp: document.getElementById("addGrp").value
     });
     document.getElementById("addTitle").value = "";
     document.getElementById("addDue").value = "";
@@ -425,6 +458,7 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
     document.getElementById("eTitle").value = t.title;
     document.getElementById("eCat").value = t.cat;
     document.getElementById("eDue").value = t.due;
+    document.getElementById("eGrp").value = t.grp || "";
     document.getElementById("eInfo").value = t.info;
     document.getElementById("eNote").value = t.note;
     if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
@@ -434,6 +468,7 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
     editing.title = document.getElementById("eTitle").value.trim() || editing.title;
     editing.cat = document.getElementById("eCat").value;
     editing.due = document.getElementById("eDue").value;
+    editing.grp = document.getElementById("eGrp").value;
     editing.info = document.getElementById("eInfo").value.trim();
     editing.note = document.getElementById("eNote").value.trim();
     editing = null; save(); render();
