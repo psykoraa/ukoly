@@ -175,7 +175,7 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
     <input type="text" id="addTitle" placeholder="Nový úkol…" aria-label="Název nového úkolu" required>
     <select id="addCat" aria-label="Kategorie"></select>
     <input type="date" id="addDue" aria-label="Termín">
-    <select id="addGrp" aria-label="Sekce (jen úkoly bez termínu)" title="Sekce pro úkol bez termínu"></select>
+    <select id="addGrp" aria-label="Sekce" title="Sekce (bez výběru se úkol řadí podle termínu)"></select>
     <button type="submit">Přidat</button>
   </form>
 
@@ -199,7 +199,7 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
       <label>Kategorie <select id="eCat"></select></label>
       <label>Termín <input type="date" id="eDue"></label>
     </div>
-    <label>Sekce (u úkolů bez termínu) <select id="eGrp"></select></label>
+    <label>Sekce (volitelné; úkol s termínem pak patří do sekce, ne do týdne) <select id="eGrp"></select></label>
     <label>Podrobnosti <textarea id="eInfo" rows="2"></textarea></label>
     <label>Poznámka (zvýrazněná) <input type="text" id="eNote"></label>
     <div class="actions">
@@ -217,13 +217,13 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
 <script type="application/json" id="planned">[
 {"id": "2026-10-19-MS-p", "title": "Připravit: MS-3 test · 3.B, V7.B", "cat": "test", "due": "2026-10-16", "info": "Psaní: po 19. 10. · 8. hodina · 14:20–15:05"},
 {"id": "2026-10-19-MS-o", "title": "Opravit: MS-3 test · 3.B, V7.B", "cat": "test", "due": "2026-10-26", "info": "Psaní: po 19. 10. · 8. hodina · 14:20–15:05"},
-{"id": "fo-2627-E-skolni", "title": "Fyzikální olympiáda okres · kat. E – školní kolo (odevzdání)", "cat": "olymp", "due": "2027-02-19", "info": "Nejpozději do 19. 2. 2027 · první tři úlohy zpravidla do konce listopadu · 7 z 12 úloh"},
-{"id": "fo-2627-F-skolni", "title": "Fyzikální olympiáda okres · kat. F – školní kolo (odevzdání)", "cat": "olymp", "due": "2027-02-19", "info": "Nejpozději do 19. 2. 2027 · první tři úlohy zpravidla do konce listopadu · 7 z 12 úloh"},
-{"id": "fo-2627-E-okresni", "title": "Fyzikální olympiáda okres · kat. E – okresní kolo", "cat": "olymp", "due": "2027-03-15", "info": "Pondělí 15. 3. 2027 · začátek v 9:00 · 4 úlohy, 4 hodiny"},
-{"id": "fo-2627-F-okresni", "title": "Fyzikální olympiáda okres · kat. F – okresní kolo", "cat": "olymp", "due": "2027-03-15", "info": "Pondělí 15. 3. 2027 · začátek v 9:00 · 4 úlohy, 4 hodiny"},
-{"id": "fo-2627-E-krajske", "title": "Fyzikální olympiáda okres · kat. E – krajské kolo", "cat": "olymp", "due": "2027-03-31", "info": "Středa 31. 3. 2027 · jen kategorie E"},
-{"id": "fo-2627-G-skolni", "title": "Fyzikální olympiáda okres · kat. G (Archimediáda) – školní kolo", "cat": "olymp", "due": "2027-03-31", "info": "Do 31. 3. 2027"},
-{"id": "fo-2627-G-okresni", "title": "Fyzikální olympiáda okres · kat. G (Archimediáda) – okresní kolo", "cat": "olymp", "due": "2027-04-05", "info": "5. 4. – 28. 5. 2027 · přesné datum určuje OKFO"}
+{"id": "fo-2627-E-skolni", "title": "Fyzikální olympiáda · kat. E – školní kolo (odevzdání)", "cat": "olymp", "grp": "fo-zs", "due": "2027-02-19", "info": "Nejpozději do 19. 2. 2027 · první tři úlohy zpravidla do konce listopadu · 7 z 12 úloh"},
+{"id": "fo-2627-F-skolni", "title": "Fyzikální olympiáda · kat. F – školní kolo (odevzdání)", "cat": "olymp", "grp": "fo-zs", "due": "2027-02-19", "info": "Nejpozději do 19. 2. 2027 · první tři úlohy zpravidla do konce listopadu · 7 z 12 úloh"},
+{"id": "fo-2627-E-okresni", "title": "Fyzikální olympiáda · kat. E – okresní kolo", "cat": "olymp", "grp": "fo-zs", "due": "2027-03-15", "info": "Pondělí 15. 3. 2027 · začátek v 9:00 · 4 úlohy, 4 hodiny"},
+{"id": "fo-2627-F-okresni", "title": "Fyzikální olympiáda · kat. F – okresní kolo", "cat": "olymp", "grp": "fo-zs", "due": "2027-03-15", "info": "Pondělí 15. 3. 2027 · začátek v 9:00 · 4 úlohy, 4 hodiny"},
+{"id": "fo-2627-E-krajske", "title": "Fyzikální olympiáda · kat. E – krajské kolo", "cat": "olymp", "grp": "fo-zs", "due": "2027-03-31", "info": "Středa 31. 3. 2027 · jen kategorie E"},
+{"id": "fo-2627-G-skolni", "title": "Fyzikální olympiáda · kat. G (Archimediáda) – školní kolo", "cat": "olymp", "grp": "fo-zs", "due": "2027-03-31", "info": "Do 31. 3. 2027"},
+{"id": "fo-2627-G-okresni", "title": "Fyzikální olympiáda · kat. G (Archimediáda) – okresní kolo", "cat": "olymp", "grp": "fo-zs", "due": "2027-04-05", "info": "5. 4. – 28. 5. 2027 · přesné datum určuje OKFO"}
 ]</script>
 
 <script>
@@ -241,13 +241,13 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
   var GROUPS = [
     { id: "fo-skola",  name: "Fyzikální olympiáda škola" },
     { id: "ao",        name: "Astronomická olympiáda" },
-    { id: "fo-okres",  name: "Fyzikální olympiáda okres" },
+    { id: "fo-zs",     name: "Fyzikální olympiáda ZŠ" },
     { id: "fyziklani", name: "Fyziklání a ŠVP" }
   ];
   function inferGroup(t) {
     var n = (t.title || "").toLowerCase();
     if (n.indexOf("astronomick") === 0) return "ao";
-    if (n.indexOf("fyzikální olympiáda") === 0) return n.indexOf("okres") >= 0 ? "fo-okres" : "fo-skola";
+    if (n.indexOf("fyzikální olympiáda") === 0) return n.indexOf("okres") >= 0 ? "fo-zs" : "fo-skola";
     return "";
   }
 
@@ -281,8 +281,7 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
       t("Astronomická olympiáda – sehnat účastníky", "olymp", ""),
       t("Astronomická olympiáda – naplánovat školní kolo", "olymp", ""),
       t("Astronomická olympiáda – opravit školní kolo", "olymp", ""),
-      t("Astronomická olympiáda – krajské kolo", "olymp", ""),
-      t("Fyzikální olympiáda – okres", "olymp", "")
+      t("Astronomická olympiáda – krajské kolo", "olymp", "")
     ];
   }
 
@@ -309,12 +308,30 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
   }
 
   // Starší uložené úkoly nemají skupinu – doplníme ji podle názvu.
-  function migrate(t) { if (t && !("grp" in t)) t.grp = t.due ? "" : inferGroup(t); return t; }
+  function migrate(t) {
+    if (t && !("grp" in t)) t.grp = t.due ? "" : inferGroup(t);
+    if (t && t.grp === "fo-okres") t.grp = "fo-zs";
+    return t;
+  }
+  // Jednorázově: úkol „Fyzikální olympiáda – okres“ zrušit, „Fyzikální olympiáda okres · …“ přejmenovat a dát do sekce ZŠ.
+  function migrateZs(list) {
+    var F = "ukoly-mig-zs";
+    try { if (localStorage.getItem(F)) return list; } catch (e) { return list; }
+    list = list.filter(function (t) { return t.title !== "Fyzikální olympiáda – okres"; });
+    list.forEach(function (t) {
+      if (/^Fyzikální olympiáda okres/.test(t.title || "")) {
+        t.title = t.title.replace("Fyzikální olympiáda okres", "Fyzikální olympiáda");
+        t.grp = "fo-zs";
+      }
+    });
+    try { localStorage.setItem(F, "1"); localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) {}
+    return list;
+  }
 
   function load() {
     try {
       var raw = localStorage.getItem(KEY);
-      if (raw) { var p = JSON.parse(raw); if (Array.isArray(p)) return p.map(migrate); }
+      if (raw) { var p = JSON.parse(raw); if (Array.isArray(p)) return migrateZs(p.map(migrate)); }
     } catch (e) {}
     return seed().map(migrate);
   }
@@ -382,8 +399,8 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
     });
     var done = vis.filter(function (t) { return t.done; });
 
-    var groups = {}, html = "", undated = open.filter(function (t) { return !t.due; });
-    open = open.filter(function (t) { return t.due; });
+    var groups = {}, html = "", undated = open.filter(function (t) { return !t.due || t.grp; });
+    open = open.filter(function (t) { return t.due && !t.grp; });
     open.forEach(function (t) {
       var b = bucket(t);
       (groups[b.k] = groups[b.k] || { label: b.label, items: [] }).items.push(t);
@@ -428,8 +445,8 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
   var catOpts = Object.keys(CATS).map(function (k) { return '<option value="' + k + '">' + CATS[k].name + '</option>'; }).join("");
   document.getElementById("addCat").innerHTML = catOpts;
   document.getElementById("eCat").innerHTML = catOpts;
-  var grpOpts = '<option value="">Ostatní bez termínu</option>' + GROUPS.map(function (g) { return '<option value="' + g.id + '">' + g.name + '</option>'; }).join("");
-  document.getElementById("addGrp").innerHTML = '<option value="">Sekce: ostatní bez termínu</option>' + GROUPS.map(function (g) { return '<option value="' + g.id + '">Sekce: ' + g.name + '</option>'; }).join("");
+  var grpOpts = '<option value="">Podle termínu / ostatní</option>' + GROUPS.map(function (g) { return '<option value="' + g.id + '">' + g.name + '</option>'; }).join("");
+  document.getElementById("addGrp").innerHTML = '<option value="">Sekce: podle termínu</option>' + GROUPS.map(function (g) { return '<option value="' + g.id + '">Sekce: ' + g.name + '</option>'; }).join("");
   document.getElementById("eGrp").innerHTML = grpOpts;
 
   document.getElementById("addForm").addEventListener("submit", function (e) {
