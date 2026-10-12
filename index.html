@@ -269,8 +269,8 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
   function pad(n) { return (n < 10 ? "0" : "") + n; }
   function iso(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
   function parse(s) { var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2], 12); }
-  var TODAY = new Date(); TODAY.setHours(12, 0, 0, 0);
-  var todayIso = iso(TODAY);
+  var TODAY, todayIso, thisMon;
+  function setToday() { TODAY = new Date(); TODAY.setHours(12, 0, 0, 0); todayIso = iso(TODAY); thisMon = monday(TODAY); }
   var DAYS = ["ne", "po", "út", "st", "čt", "pá", "so"];
   var DAYS_LONG = ["neděle", "pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota"];
   function dm(d) { return d.getDate() + "." + NB + (d.getMonth() + 1) + "."; }
@@ -285,14 +285,16 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
   }
   function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
 
-  var thisMon = monday(TODAY);
+  setToday();
+  // Sekce podle týdne termínu. V pondělí se posunou samy: tento týden -> minulý, příští -> tento.
   function bucket(t) {
     if (!t.due) return { k: 9, label: "Bez termínu" };
-    if (t.due < todayIso) return { k: 0, label: "Po termínu" };
     var diff = Math.round((monday(parse(t.due)) - thisMon) / (7 * 86400000));
-    if (diff === 0) return { k: 1, label: "Tento týden" };
-    if (diff === 1) return { k: 2, label: "Příští týden" };
-    return { k: 3, label: "Později" };
+    if (diff < -1) return { k: 0, label: "Starší" };
+    if (diff === -1) return { k: 1, label: "Minulý týden" };
+    if (diff === 0) return { k: 2, label: "Tento týden" };
+    if (diff === 1) return { k: 3, label: "Příští týden" };
+    return { k: 4, label: "Později" };
   }
 
   function row(t) {
@@ -333,7 +335,7 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
     });
     Object.keys(groups).sort().forEach(function (k) {
       var g = groups[k];
-      html += '<h2' + (k === "0" ? ' class="late"' : '') + '>' + g.label + ' <span class="n">' + g.items.length + '</span></h2>';
+      html += '<h2' + (k === "0" || k === "1" ? ' class="late"' : '') + '>' + g.label + ' <span class="n">' + g.items.length + '</span></h2>';
       g.items.forEach(function (t) { html += row(t); });
     });
     if (!open.length) html += '<div class="empty">Žádné otevřené úkoly. 🎉</div>';
@@ -348,7 +350,7 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
   function summary() {
     var total = tasks.length, d = tasks.filter(function (t) { return t.done; }).length;
     var late = tasks.filter(function (t) { return !t.done && t.due && t.due < todayIso; }).length;
-    var week = tasks.filter(function (t) { return !t.done && t.due && bucket(t).k === 1; }).length;
+    var week = tasks.filter(function (t) { return !t.done && t.due && bucket(t).k === 2; }).length;
     document.getElementById("sumMain").textContent = d + " z " + total + " úkolů hotovo";
     document.getElementById("sumDetail").textContent = "tento týden zbývá " + week;
     document.getElementById("sumLate").textContent = late ? "Po termínu: " + late : "";
@@ -456,6 +458,14 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
   });
 
   render();
+
+  // Při přechodu přes půlnoc (např. nedělní noc) přepočítat týdny, i když je stránka otevřená.
+  function checkDay() {
+    var d = new Date(); d.setHours(12, 0, 0, 0);
+    if (iso(d) !== todayIso) { setToday(); render(); }
+  }
+  setInterval(checkDay, 60000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) checkDay(); });
 })();
 </script>
 </body>
