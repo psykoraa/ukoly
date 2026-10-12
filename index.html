@@ -1,0 +1,462 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Moje úkoly</title>
+<style>
+:root {
+  --bg: #f4f1ea;
+  --surface: #fffdf8;
+  --ink: #23201b;
+  --muted: #6d675c;
+  --line: #e4ded1;
+  --accent: #2f5d50;
+  --accent-ink: #ffffff;
+  --done: #e3ece6;
+  --late: #b5471f;
+  --late-soft: #fbe9df;
+  --c-test: #3b6ea8;
+  --c-dopis: #8a5a9e;
+  --c-olymp: #b9801a;
+  --c-jine: #5f7a6b;
+  --shadow: 0 1px 2px rgba(35,32,27,.06), 0 4px 14px rgba(35,32,27,.05);
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #17191a; --surface: #1f2223; --ink: #ece8df; --muted: #9b9588; --line: #2f3334;
+    --accent: #7fc4ae; --accent-ink: #0f1a16; --done: #1f2d28;
+    --late: #f09468; --late-soft: #3a2a21;
+    --c-test: #7fb0e6; --c-dopis: #c79bdc; --c-olymp: #e4b658; --c-jine: #93b5a3;
+    --shadow: none;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #17191a; --surface: #1f2223; --ink: #ece8df; --muted: #9b9588; --line: #2f3334;
+  --accent: #7fc4ae; --accent-ink: #0f1a16; --done: #1f2d28;
+  --late: #f09468; --late-soft: #3a2a21;
+  --c-test: #7fb0e6; --c-dopis: #c79bdc; --c-olymp: #e4b658; --c-jine: #93b5a3;
+  --shadow: none;
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font: 16px/1.45 "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+main { max-width: 780px; margin: 0 auto; padding: 32px 16px 64px; }
+button, input, select, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 20px; }
+h1 { font-size: 2rem; letter-spacing: -.02em; margin: 0; line-height: 1.1; }
+.today { color: var(--muted); margin-top: 4px; }
+.iconbtn {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  min-width: 44px; min-height: 44px; cursor: pointer; padding: 0 12px;
+}
+
+.progress {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
+  padding: 16px 18px; box-shadow: var(--shadow); margin-bottom: 18px;
+}
+.progress-top { display: flex; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; align-items: baseline; }
+.progress strong { font-size: 1.2rem; }
+.progress .muted { color: var(--muted); font-size: .92rem; }
+.progress .lateinfo { color: var(--late); font-weight: 600; }
+.bar { height: 8px; background: var(--line); border-radius: 99px; margin-top: 12px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); border-radius: 99px; transition: width .3s ease; }
+
+form.add {
+  display: grid; grid-template-columns: minmax(0,1fr) auto auto auto; gap: 8px; margin-bottom: 18px;
+}
+form.add input, form.add select {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  padding: 0 12px; min-height: 46px; min-width: 0;
+}
+form.add button {
+  background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 10px;
+  min-height: 46px; padding: 0 18px; font-weight: 600; cursor: pointer;
+}
+
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.chip {
+  background: transparent; border: 1px solid var(--line); border-radius: 99px;
+  padding: 0 14px; min-height: 40px; cursor: pointer; color: var(--muted);
+}
+.chip[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+h2 { font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 26px 0 10px; display: flex; gap: 8px; align-items: baseline; }
+h2 .n { font-weight: 400; }
+h2.late { color: var(--late); }
+
+.task {
+  position: relative; display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 4px 12px; align-items: center;
+  background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--cat, var(--c-jine));
+  border-radius: 12px; padding: 10px 8px 10px 14px; margin-bottom: 8px; box-shadow: var(--shadow);
+}
+.task.late { background: var(--late-soft); border-color: var(--late); border-left-color: var(--late); }
+.task.done { background: var(--done); box-shadow: none; }
+.task.done .title { text-decoration: line-through; color: var(--muted); }
+.check { width: 24px; height: 24px; accent-color: var(--accent); cursor: pointer; margin: 0; }
+.checkwrap { display: grid; place-items: center; min-width: 44px; min-height: 44px; margin: -10px 0 -10px -10px; cursor: pointer; }
+.body { min-width: 0; cursor: pointer; padding: 4px 0; }
+.title { font-weight: 600; overflow-wrap: anywhere; }
+.meta { font-size: .85rem; color: var(--muted); display: flex; flex-wrap: wrap; gap: 2px 10px; margin-top: 2px; }
+.tag { color: var(--cat); font-weight: 600; }
+.note { font-size: .85rem; color: var(--late); margin-top: 2px; }
+.when { text-align: right; font-size: .85rem; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; padding-right: 4px; }
+.when b { display: block; color: var(--ink); font-size: .95rem; }
+.task.late .when b, .task.late .when { color: var(--late); }
+.empty { color: var(--muted); padding: 24px 0; text-align: center; }
+
+details.donebox { margin-top: 26px; }
+details.donebox summary {
+  cursor: pointer; color: var(--muted); font-size: .8rem; text-transform: uppercase; letter-spacing: .08em;
+  min-height: 44px; display: flex; align-items: center;
+}
+
+dialog {
+  border: 1px solid var(--line); border-radius: 16px; background: var(--surface); color: var(--ink);
+  width: min(460px, calc(100vw - 32px)); padding: 20px;
+}
+dialog::backdrop { background: rgba(0,0,0,.45); }
+dialog h3 { margin: 0 0 14px; }
+dialog label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 12px; }
+dialog input, dialog select, dialog textarea {
+  display: block; width: 100%; margin-top: 4px; background: var(--bg);
+  border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 44px;
+}
+dialog .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+dialog .actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 6px; }
+dialog .actions div { display: flex; gap: 8px; }
+dialog button { min-height: 44px; border-radius: 10px; padding: 0 16px; cursor: pointer; border: 1px solid var(--line); background: transparent; }
+dialog button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+dialog button.danger { color: var(--late); }
+
+footer { margin-top: 36px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; color: var(--muted); font-size: .85rem; }
+footer button { background: transparent; border: 1px solid var(--line); border-radius: 10px; min-height: 40px; padding: 0 12px; cursor: pointer; color: var(--muted); }
+
+@media (max-width: 560px) {
+  h1 { font-size: 1.6rem; }
+  form.add { grid-template-columns: 1fr 1fr; }
+  form.add input[type=text] { grid-column: 1 / -1; }
+  form.add button { grid-column: 1 / -1; }
+  .task { grid-template-columns: auto minmax(0,1fr); }
+  .when { grid-column: 2; text-align: left; padding: 0 0 4px; }
+  .when b { display: inline; margin-right: 6px; }
+}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>Moje úkoly</h1>
+      <div class="today" id="today"></div>
+    </div>
+    <button class="iconbtn" id="theme" type="button" aria-label="Přepnout světlý a tmavý vzhled">🌓</button>
+  </header>
+
+  <section class="progress" aria-live="polite">
+    <div class="progress-top">
+      <strong id="sumMain"></strong>
+      <span class="muted" id="sumDetail"></span>
+    </div>
+    <div class="lateinfo muted" id="sumLate"></div>
+    <div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" id="bar"><i id="barFill"></i></div>
+  </section>
+
+  <form class="add" id="addForm">
+    <input type="text" id="addTitle" placeholder="Nový úkol…" aria-label="Název nového úkolu" required>
+    <select id="addCat" aria-label="Kategorie"></select>
+    <input type="date" id="addDue" aria-label="Termín">
+    <button type="submit">Přidat</button>
+  </form>
+
+  <div class="filters" id="filters" role="group" aria-label="Filtr kategorií"></div>
+
+  <div id="app"></div>
+
+  <footer>
+    <span>Úkoly se ukládají v tomto prohlížeči.</span>
+    <button type="button" id="export">Exportovat</button>
+    <button type="button" id="import">Importovat</button>
+    <input type="file" id="importFile" accept="application/json" hidden>
+  </footer>
+</main>
+
+<dialog id="dlg">
+  <form method="dialog" id="editForm">
+    <h3>Upravit úkol</h3>
+    <label>Název <input type="text" id="eTitle" required></label>
+    <div class="row">
+      <label>Kategorie <select id="eCat"></select></label>
+      <label>Termín <input type="date" id="eDue"></label>
+    </div>
+    <label>Podrobnosti <textarea id="eInfo" rows="2"></textarea></label>
+    <label>Poznámka (zvýrazněná) <input type="text" id="eNote"></label>
+    <div class="actions">
+      <button type="button" class="danger" id="eDelete">Smazat</button>
+      <div>
+        <button type="button" id="eCancel">Zrušit</button>
+        <button type="submit" class="primary">Uložit</button>
+      </div>
+    </div>
+  </form>
+</dialog>
+
+<script>
+(function () {
+  var NB = " ";
+  var KEY = "ukoly-v1";
+  var CATS = {
+    test:  { name: "Test",       color: "var(--c-test)" },
+    dopis: { name: "Dopisování", color: "var(--c-dopis)" },
+    olymp: { name: "Olympiáda",  color: "var(--c-olymp)" },
+    jine:  { name: "Jiné",       color: "var(--c-jine)" }
+  };
+
+  // Úkoly převedené z artefaktu „Testy a dopisování – příprava a opravy“
+  // (příprava = předchozí pracovní den před psaním, oprava = týden po psaní).
+  function seed() {
+    var n = 0;
+    function t(title, cat, due, done, info, note) {
+      return { id: "s" + (++n), title: title, cat: cat, due: due, done: done, info: info || "", note: note || "" };
+    }
+    return [
+      t("Připravit: FyS-3 test · 3.A, 3.B, V7.A", "test", "2026-10-06", true, "Psaní: st 7. 10. · 3. hodina · 9:55–10:25"),
+      t("Opravit: FyS-3 test · 3.A, 3.B, V7.A", "test", "2026-10-14", true, "Psaní: st 7. 10. · 3. hodina · 9:55–10:25"),
+      t("Připravit: Fyzika test · 4.B", "test", "2026-10-07", true, "Psaní: čt 8. 10. · 1. hodina · 7:55–8:25"),
+      t("Připravit: Fyzika test · V8.B", "test", "2026-10-07", true, "Psaní: čt 8. 10. · 7. hodina · 13:30–14:00"),
+      t("Připravit: Fyzika test · V5.B", "test", "2026-10-08", true, "Psaní: pá 9. 10. · 5. hodina · 11:45–12:15"),
+      t("Připravit: Dopisování", "dopis", "2026-10-08", true, "Psaní: pá 9. 10. · 6. hodina · 12:40–13:10", "Kryje se s hodinou V8.A (12:40–13:25)."),
+      t("Opravit: Fyzika test · 4.B", "test", "2026-10-15", false, "Psaní: čt 8. 10. · 1. hodina · 7:55–8:25"),
+      t("Opravit: Fyzika test · V8.B", "test", "2026-10-15", false, "Psaní: čt 8. 10. · 7. hodina · 13:30–14:00"),
+      t("Opravit: Fyzika test · V5.B", "test", "2026-10-16", false, "Psaní: pá 9. 10. · 5. hodina · 11:45–12:15"),
+      t("Opravit: Dopisování", "dopis", "2026-10-16", false, "Psaní: pá 9. 10. · 6. hodina · 12:40–13:10"),
+      t("Připravit: Fyzika test · 2.A", "test", "2026-10-12", true, "Psaní: út 13. 10. · 6. hodina · 12:40–13:10"),
+      t("Připravit: Fyzika test · V5.A", "test", "2026-10-12", true, "Psaní: út 13. 10. · 9. hodina · 15:10–15:40"),
+      t("Opravit: Fyzika test · 2.A", "test", "2026-10-20", false, "Psaní: út 13. 10. · 6. hodina · 12:40–13:10"),
+      t("Opravit: Fyzika test · V5.A", "test", "2026-10-20", false, "Psaní: út 13. 10. · 9. hodina · 15:10–15:40"),
+      t("Fyzikální olympiáda – sehnat účastníky", "olymp", ""),
+      t("Fyzikální olympiáda – přednáška", "olymp", ""),
+      t("Fyzikální olympiáda – odevzdání domácího kola", "olymp", ""),
+      t("Fyzikální olympiáda – oprava domácího kola", "olymp", ""),
+      t("Fyzikální olympiáda – krajské kolo", "olymp", ""),
+      t("Astronomická olympiáda – sehnat účastníky", "olymp", ""),
+      t("Astronomická olympiáda – naplánovat školní kolo", "olymp", ""),
+      t("Astronomická olympiáda – opravit školní kolo", "olymp", ""),
+      t("Astronomická olympiáda – krajské kolo", "olymp", ""),
+      t("Fyzikální olympiáda – okres", "olymp", "")
+    ];
+  }
+
+  var tasks = load();
+  var filter = "vse";
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      if (raw) { var p = JSON.parse(raw); if (Array.isArray(p)) return p; }
+    } catch (e) {}
+    return seed();
+  }
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(tasks)); } catch (e) {} }
+
+  function pad(n) { return (n < 10 ? "0" : "") + n; }
+  function iso(d) { return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+  function parse(s) { var p = s.split("-"); return new Date(+p[0], +p[1] - 1, +p[2], 12); }
+  var TODAY = new Date(); TODAY.setHours(12, 0, 0, 0);
+  var todayIso = iso(TODAY);
+  var DAYS = ["ne", "po", "út", "st", "čt", "pá", "so"];
+  var DAYS_LONG = ["neděle", "pondělí", "úterý", "středa", "čtvrtek", "pátek", "sobota"];
+  function dm(d) { return d.getDate() + "." + NB + (d.getMonth() + 1) + "."; }
+  function monday(d) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; }
+  function plural(n) { return n === 1 ? "den" : (n >= 2 && n <= 4 ? "dny" : "dní"); }
+  function rel(s) {
+    var n = Math.round((parse(s) - TODAY) / 86400000);
+    if (n === 0) return "dnes";
+    if (n === 1) return "zítra";
+    if (n === -1) return "včera";
+    return n > 0 ? "za" + NB + n + NB + plural(n) : "před" + NB + (-n) + NB + plural(-n);
+  }
+  function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+
+  var thisMon = monday(TODAY);
+  function bucket(t) {
+    if (!t.due) return { k: 9, label: "Bez termínu" };
+    if (t.due < todayIso) return { k: 0, label: "Po termínu" };
+    var diff = Math.round((monday(parse(t.due)) - thisMon) / (7 * 86400000));
+    if (diff === 0) return { k: 1, label: "Tento týden" };
+    if (diff === 1) return { k: 2, label: "Příští týden" };
+    return { k: 3, label: "Později" };
+  }
+
+  function row(t) {
+    var cat = CATS[t.cat] || CATS.jine;
+    var late = !t.done && t.due && t.due < todayIso;
+    var whenHtml = "";
+    if (t.due) {
+      var d = parse(t.due);
+      whenHtml = '<div class="when"><b>' + DAYS[d.getDay()] + NB + dm(d) + '</b>' + (t.done ? "hotovo" : (late ? "po termínu · " : "") + rel(t.due)) + '</div>';
+    }
+    return '<div class="task' + (t.done ? ' done' : '') + (late ? ' late' : '') + '" style="--cat:' + cat.color + '" data-id="' + t.id + '">' +
+      '<label class="checkwrap"><input class="check" type="checkbox" data-toggle="' + t.id + '"' + (t.done ? ' checked' : '') + ' aria-label="Hotovo: ' + esc(t.title) + '"></label>' +
+      '<div class="body" data-edit="' + t.id + '"><div class="title">' + esc(t.title) + '</div>' +
+      '<div class="meta"><span class="tag">' + cat.name + '</span>' + (t.info ? '<span>' + esc(t.info) + '</span>' : '') + '</div>' +
+      (t.note ? '<div class="note">' + esc(t.note) + '</div>' : '') + '</div>' + whenHtml + '</div>';
+  }
+
+  function render() {
+    document.getElementById("today").textContent = DAYS_LONG[TODAY.getDay()] + " " + dm(TODAY) + " " + TODAY.getFullYear();
+
+    var fh = '<button type="button" class="chip" data-f="vse" aria-pressed="' + (filter === "vse") + '">Vše</button>';
+    Object.keys(CATS).forEach(function (k) {
+      fh += '<button type="button" class="chip" data-f="' + k + '" aria-pressed="' + (filter === k) + '">' + CATS[k].name + '</button>';
+    });
+    document.getElementById("filters").innerHTML = fh;
+
+    var vis = tasks.filter(function (t) { return filter === "vse" || t.cat === filter; });
+    var open = vis.filter(function (t) { return !t.done; }).sort(function (a, b) {
+      if (!a.due !== !b.due) return a.due ? -1 : 1;
+      return a.due < b.due ? -1 : (a.due > b.due ? 1 : 0);
+    });
+    var done = vis.filter(function (t) { return t.done; });
+
+    var groups = {}, html = "";
+    open.forEach(function (t) {
+      var b = bucket(t);
+      (groups[b.k] = groups[b.k] || { label: b.label, items: [] }).items.push(t);
+    });
+    Object.keys(groups).sort().forEach(function (k) {
+      var g = groups[k];
+      html += '<h2' + (k === "0" ? ' class="late"' : '') + '>' + g.label + ' <span class="n">' + g.items.length + '</span></h2>';
+      g.items.forEach(function (t) { html += row(t); });
+    });
+    if (!open.length) html += '<div class="empty">Žádné otevřené úkoly. 🎉</div>';
+    if (done.length) {
+      done.sort(function (a, b) { return a.due < b.due ? 1 : -1; });
+      html += '<details class="donebox"' + (window.__doneOpen ? " open" : "") + '><summary>Hotové (' + done.length + ')</summary>' + done.map(row).join("") + '</details>';
+    }
+    document.getElementById("app").innerHTML = html;
+    summary();
+  }
+
+  function summary() {
+    var total = tasks.length, d = tasks.filter(function (t) { return t.done; }).length;
+    var late = tasks.filter(function (t) { return !t.done && t.due && t.due < todayIso; }).length;
+    var week = tasks.filter(function (t) { return !t.done && t.due && bucket(t).k === 1; }).length;
+    document.getElementById("sumMain").textContent = d + " z " + total + " úkolů hotovo";
+    document.getElementById("sumDetail").textContent = "tento týden zbývá " + week;
+    document.getElementById("sumLate").textContent = late ? "Po termínu: " + late : "";
+    var pct = total ? Math.round(100 * d / total) : 0;
+    document.getElementById("barFill").style.width = pct + "%";
+    document.getElementById("bar").setAttribute("aria-valuenow", pct);
+  }
+
+  function byId(id) { for (var i = 0; i < tasks.length; i++) if (tasks[i].id === id) return tasks[i]; }
+
+  // Formuláře a výběry kategorií
+  var catOpts = Object.keys(CATS).map(function (k) { return '<option value="' + k + '">' + CATS[k].name + '</option>'; }).join("");
+  document.getElementById("addCat").innerHTML = catOpts;
+  document.getElementById("eCat").innerHTML = catOpts;
+
+  document.getElementById("addForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var title = document.getElementById("addTitle").value.trim();
+    if (!title) return;
+    tasks.push({
+      id: "u" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5),
+      title: title, cat: document.getElementById("addCat").value,
+      due: document.getElementById("addDue").value, done: false, info: "", note: ""
+    });
+    document.getElementById("addTitle").value = "";
+    document.getElementById("addDue").value = "";
+    save(); render();
+  });
+
+  document.getElementById("filters").addEventListener("click", function (e) {
+    var f = e.target.getAttribute && e.target.getAttribute("data-f");
+    if (f) { filter = f; render(); }
+  });
+
+  var editing = null, dlg = document.getElementById("dlg");
+  document.getElementById("app").addEventListener("change", function (e) {
+    var id = e.target.getAttribute("data-toggle");
+    if (!id) return;
+    var t = byId(id); if (!t) return;
+    t.done = e.target.checked;
+    window.__doneOpen = !!document.querySelector("details.donebox[open]");
+    save(); render();
+  });
+  document.getElementById("app").addEventListener("click", function (e) {
+    var el = e.target.closest && e.target.closest("[data-edit]");
+    if (!el) return;
+    var t = byId(el.getAttribute("data-edit")); if (!t) return;
+    editing = t;
+    document.getElementById("eTitle").value = t.title;
+    document.getElementById("eCat").value = t.cat;
+    document.getElementById("eDue").value = t.due;
+    document.getElementById("eInfo").value = t.info;
+    document.getElementById("eNote").value = t.note;
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+  });
+  document.getElementById("editForm").addEventListener("submit", function () {
+    if (!editing) return;
+    editing.title = document.getElementById("eTitle").value.trim() || editing.title;
+    editing.cat = document.getElementById("eCat").value;
+    editing.due = document.getElementById("eDue").value;
+    editing.info = document.getElementById("eInfo").value.trim();
+    editing.note = document.getElementById("eNote").value.trim();
+    editing = null; save(); render();
+  });
+  document.getElementById("eCancel").addEventListener("click", function () { editing = null; dlg.close(); });
+  document.getElementById("eDelete").addEventListener("click", function () {
+    if (editing && confirm("Opravdu smazat tento úkol?")) {
+      tasks = tasks.filter(function (t) { return t !== editing; });
+      editing = null; dlg.close(); save(); render();
+    }
+  });
+
+  // Motiv
+  var THEME = "ukoly-theme";
+  try { var th = localStorage.getItem(THEME); if (th) document.documentElement.setAttribute("data-theme", th); } catch (e) {}
+  document.getElementById("theme").addEventListener("click", function () {
+    var cur = document.documentElement.getAttribute("data-theme") ||
+      (window.matchMedia && matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    var next = cur === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem(THEME, next); } catch (e) {}
+  });
+
+  // Export / import
+  document.getElementById("export").addEventListener("click", function () {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(tasks, null, 2)], { type: "application/json" }));
+    a.download = "ukoly-" + todayIso + ".json";
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  });
+  document.getElementById("import").addEventListener("click", function () { document.getElementById("importFile").click(); });
+  document.getElementById("importFile").addEventListener("change", function (e) {
+    var f = e.target.files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        var p = JSON.parse(r.result);
+        if (!Array.isArray(p)) throw 0;
+        if (confirm("Nahradit současné úkoly importovanými (" + p.length + ")?")) { tasks = p; save(); render(); }
+      } catch (err) { alert("Soubor se nepodařilo načíst."); }
+    };
+    r.readAsText(f);
+    e.target.value = "";
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
