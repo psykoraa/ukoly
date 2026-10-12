@@ -208,6 +208,10 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
   </form>
 </dialog>
 
+<!-- Plánované úkoly (testy a dopisování) zapisuje skill zapis-do-kalendare. Stránka je při načtení slučuje
+     do uložených úkolů podle id; odškrtnutí a úpravy v prohlížeči zůstávají. Upravuj jen toto pole. -->
+<script type="application/json" id="planned">[]</script>
+
 <script>
 (function () {
   var NB = " ";
@@ -256,6 +260,25 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
 
   var tasks = load();
   var filter = "vse";
+
+  // Úkoly z bloku #planned, které v uložených úkolech ještě nejsou (podle id).
+  // Smazané úkoly si pamatujeme, aby se po načtení nevrátily.
+  var GONE = "ukoly-gone";
+  function gone() { try { var g = JSON.parse(localStorage.getItem(GONE)); if (Array.isArray(g)) return g; } catch (e) {} return []; }
+  function markGone(id) { var g = gone(); if (g.indexOf(id) < 0) g.push(id); try { localStorage.setItem(GONE, JSON.stringify(g)); } catch (e) {} }
+  function mergePlanned() {
+    var el = document.getElementById("planned"), plan = [], added = false;
+    try { plan = JSON.parse(el.textContent); } catch (e) {}
+    if (!Array.isArray(plan)) return;
+    var have = {}, skip = gone();
+    tasks.forEach(function (t) { have[t.id] = true; });
+    plan.forEach(function (p) {
+      if (!p || !p.id || have[p.id] || skip.indexOf(p.id) >= 0) return;
+      tasks.push({ id: p.id, title: p.title || "", cat: p.cat || "jine", due: p.due || "", done: false, info: p.info || "", note: p.note || "" });
+      added = true;
+    });
+    if (added) save();
+  }
 
   function load() {
     try {
@@ -416,6 +439,7 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
   document.getElementById("eCancel").addEventListener("click", function () { editing = null; dlg.close(); });
   document.getElementById("eDelete").addEventListener("click", function () {
     if (editing && confirm("Opravdu smazat tento úkol?")) {
+      markGone(editing.id);
       tasks = tasks.filter(function (t) { return t !== editing; });
       editing = null; dlg.close(); save(); render();
     }
@@ -455,6 +479,7 @@ footer button { background: transparent; border: 1px solid var(--line); border-r
     e.target.value = "";
   });
 
+  mergePlanned();
   render();
 })();
 </script>
